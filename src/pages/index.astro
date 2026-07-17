@@ -1,7 +1,5 @@
 ---
 import Layout from '../layouts/Layout.astro';
-
-const base = import.meta.env.BASE_URL.replace(/\/?$/, '/');
 ---
 
 <Layout title="Home">
@@ -22,7 +20,7 @@ const base = import.meta.env.BASE_URL.replace(/\/?$/, '/');
 	</p>
 
 	<p>
-		Find more on <a href={`${base}about/`}>about</a>, <a href={`${base}projects/`}>projects</a>,
-		the <a href={`${base}blog/`}>blog</a>, or how to <a href={`${base}contact/`}>get in touch</a>.
+		Find more on <a href="/about/">about</a>, <a href="/projects/">projects</a>,
+		the <a href="/blog/">blog</a>, or how to <a href="/contact/">get in touch</a>.
 	</p>
 </Layout>
