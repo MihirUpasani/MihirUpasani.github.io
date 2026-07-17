@@ -1,19 +1,26 @@
 ---
 import Layout from '../../layouts/Layout.astro';
 
-// PLACEHOLDER: replace with your real projects. Add/remove entries freely.
+// DRAFT: seeded from your resume's Personal Projects section. Add/edit/remove
+// freely — also worth adding non-ML/work projects here if you have them.
 const projects = [
 	{
-		name: '[PLACEHOLDER: Project name]',
-		description: '[PLACEHOLDER: one or two sentences on what it does and why you built it.]',
-		href: '#',
-		tags: ['tag1', 'tag2'],
+		name: 'CIFAR-10 ResNet Hyperparameter Tuning',
+		description: '95% test accuracy on CIFAR-10 with <5M parameters using a modified ResNet-18 ([2,1,1,1] block config). Systematic search across 15+ experiments: 85% baseline → 90% (LR scheduling) → 94% (cyclic momentum) → 95% (exponential decay at 100 epochs).',
+		href: 'https://github.com/MihirUpasani/CIFAR10-ResNet18',
+		tags: ['PyTorch', 'CUDA'],
 	},
 	{
-		name: '[PLACEHOLDER: Project name]',
-		description: '[PLACEHOLDER: one or two sentences on what it does and why you built it.]',
-		href: '#',
-		tags: ['tag1', 'tag2'],
+		name: 'CIFAR-10 ResNet-50 with Test-Time Augmentation',
+		description: 'Full ResNet-50 (Bottleneck [3,4,6,3]) with SGD + Nesterov momentum and ReduceLROnPlateau, multi-GPU support. Achieved 92%+ accuracy with test-time augmentation.',
+		href: 'https://github.com/MihirUpasani/CIFAR10-TTA92-ResNet',
+		tags: ['PyTorch', 'CUDA', 'Multi-GPU'],
+	},
+	{
+		name: 'Learning Rate vs Batch Size Experiments',
+		description: "Reproduction of Smith et al.'s \"Don't Decay the Learning Rate, Increase the Batch Size\" (arXiv:1711.00489). Empirically validated batch-size scaling as a substitute for LR decay, implemented cyclical LRs, and analyzed the noise ratio (LR / batch size) as the governing variable.",
+		href: 'https://github.com/MihirUpasani/LearningRatevsBatchSize',
+		tags: ['Python', 'PyTorch', 'Jupyter'],
 	},
 ];
 ---
