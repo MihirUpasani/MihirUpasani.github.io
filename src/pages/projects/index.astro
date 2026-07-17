@@ -1,0 +1,56 @@
+---
+import Layout from '../../layouts/Layout.astro';
+
+// PLACEHOLDER: replace with your real projects. Add/remove entries freely.
+const projects = [
+	{
+		name: '[PLACEHOLDER: Project name]',
+		description: '[PLACEHOLDER: one or two sentences on what it does and why you built it.]',
+		href: '#',
+		tags: ['tag1', 'tag2'],
+	},
+	{
+		name: '[PLACEHOLDER: Project name]',
+		description: '[PLACEHOLDER: one or two sentences on what it does and why you built it.]',
+		href: '#',
+		tags: ['tag1', 'tag2'],
+	},
+];
+---
+
+<Layout title="Projects">
+	<h1>Projects</h1>
+	<p>[PLACEHOLDER: short intro line about how you pick/approach projects.]</p>
+
+	<ul class="project-list">
+		{projects.map((project) => (
+			<li>
+				<h2><a href={project.href}>{project.name}</a></h2>
+				<p>{project.description}</p>
+				<p class="tags">{project.tags.join(' · ')}</p>
+			</li>
+		))}
+	</ul>
+</Layout>
+
+<style>
+	.project-list {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+	}
+
+	.project-list li {
+		margin-bottom: 2.5rem;
+	}
+
+	.project-list h2 {
+		margin-bottom: 0.25rem;
+		font-size: 1.1rem;
+	}
+
+	.tags {
+		color: var(--text-faint);
+		font-size: 0.85rem;
+	}
+</style>

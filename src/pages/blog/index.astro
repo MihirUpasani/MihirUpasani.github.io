@@ -1,0 +1,48 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { getCollection } from 'astro:content';
+
+const isProd = import.meta.env.PROD;
+const allPosts = await getCollection('blog', ({ data }) => !isProd || !data.draft);
+const posts = allPosts.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
+---
+
+<Layout title="Blog">
+	<h1>Blog</h1>
+
+	{posts.length === 0 && <p>Nothing published yet.</p>}
+
+	<ul class="post-list">
+		{posts.map((post) => (
+			<li>
+				<a href={`/blog/${post.id}/`}>{post.data.title}</a>
+				<p class="date">
+					{post.data.pubDate.toLocaleDateString('en-US', {
+						year: 'numeric',
+						month: 'long',
+						day: 'numeric',
+					})}
+					{post.data.draft && ' · draft'}
+				</p>
+			</li>
+		))}
+	</ul>
+</Layout>
+
+<style>
+	.post-list {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+	}
+
+	.post-list li {
+		margin-bottom: 1.5rem;
+	}
+
+	.date {
+		margin: 0.15rem 0 0;
+		color: var(--text-faint);
+		font-size: 0.85rem;
+	}
+</style>
