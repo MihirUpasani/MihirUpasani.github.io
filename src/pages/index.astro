@@ -1,26 +1,68 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import { getCollection } from 'astro:content';
+
+const isProd = import.meta.env.PROD;
+const recent = (await getCollection('blog', ({ data }) => !isProd || !data.draft))
+	.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf())
+	.slice(0, 3);
 ---
 
 <Layout title="Home">
 	<h1>Mihir Upasani</h1>
 
-	<!-- PLACEHOLDER: replace with your real one-line pitch / role -->
 	<p>
-		[PLACEHOLDER: one-line intro — who you are, what you work on, e.g. "Software
-		engineer working on X. I write about Y and tinker with Z."]
-	</p>
-
-	<!-- PLACEHOLDER: a few sentences of personality/voice, in the style of the
-	     reference sites — conversational but credible. What are you into outside
-	     of work? What's the one thing you want a visitor to remember? -->
-	<p>
-		[PLACEHOLDER: 2-3 sentences of personal voice/hooks — hobbies, interests,
-		what you're currently curious about.]
+		ML engineer at DataNimbus. I build machine learning systems on Databricks: the
+		models, and the less glamorous plumbing that gets them into production and keeps
+		them there.
 	</p>
 
 	<p>
-		Find more on <a href="/about/">about</a>, <a href="/projects/">projects</a>,
+		Lately that has meant building a multi-tenant ML experimentation platform on
+		Databricks Apps, and finding out exactly where the platform bends. I write up the
+		parts that aren't documented anywhere else.
+	</p>
+
+	{recent.length > 0 && (
+		<section>
+			<h2>Recent writing</h2>
+			<ul class="post-list">
+				{recent.map((post) => (
+					<li>
+						<a href={`/blog/${post.id}/`}>{post.data.title}</a>
+						<p class="desc">{post.data.description}</p>
+					</li>
+				))}
+			</ul>
+		</section>
+	)}
+
+	<p>
+		More on <a href="/about/">about</a>, <a href="/projects/">projects</a>,
 		the <a href="/blog/">blog</a>, or how to <a href="/contact/">get in touch</a>.
 	</p>
 </Layout>
+
+<style>
+	h2 {
+		font-size: 1rem;
+		color: var(--text-dim);
+		margin-top: 2.5rem;
+	}
+
+	.post-list {
+		list-style: none;
+		margin: 0 0 2.5rem;
+		padding: 0;
+	}
+
+	.post-list li {
+		margin-bottom: 1.25rem;
+	}
+
+	.desc {
+		margin: 0.15rem 0 0;
+		color: var(--text-faint);
+		font-size: 0.85rem;
+	}
+</style>
