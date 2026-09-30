@@ -1,7 +1,7 @@
 ---
 title: "Hello, world"
 description: "I started a blog. Here's what's going to be on it."
-pubDate: 2026-09-30
+pubDate: 2026-09-28
 ---
 
 I started a blog. Mostly so I stop losing things.
