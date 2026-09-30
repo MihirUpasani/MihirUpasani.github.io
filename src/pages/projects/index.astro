@@ -1,8 +1,6 @@
 ---
 import Layout from '../../layouts/Layout.astro';
 
-// DRAFT: seeded from your resume's Personal Projects section. Add/edit/remove
-// freely — also worth adding non-ML/work projects here if you have them.
 const projects = [
 	{
 		name: 'CIFAR-10 ResNet Hyperparameter Tuning',
@@ -27,7 +25,11 @@ const projects = [
 
 <Layout title="Projects">
 	<h1>Projects</h1>
-	<p>[PLACEHOLDER: short intro line about how you pick/approach projects.]</p>
+	<p>
+		I do projects on a need-to basis: if I want to learn something and have the time,
+		I take a shot at it. Most of what's here is grad work from NYU, mostly distributed
+		ML stuff.
+	</p>
 
 	<ul class="project-list">
 		{projects.map((project) => (

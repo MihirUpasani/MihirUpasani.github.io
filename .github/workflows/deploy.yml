@@ -4,6 +4,9 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+  schedule:
+    # Daily rebuild so the Instagram grid on /about picks up new posts.
+    - cron: '0 12 * * *'
 
 permissions:
   contents: read
@@ -23,6 +26,8 @@ jobs:
 
       - name: Install, build, and upload
         uses: withastro/action@v3
+        env:
+          INSTAGRAM_ACCESS_TOKEN: ${{ secrets.INSTAGRAM_ACCESS_TOKEN }}
         with:
           node-version: 22
 
