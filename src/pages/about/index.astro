@@ -30,12 +30,19 @@ import Layout from '../../layouts/Layout.astro';
 	<p>
 		I shoot film. The latest frames end up on <a href="https://instagram.com/upafilm">@upafilm</a>.
 	</p>
-	<iframe
-		class="ig-embed"
-		src="https://www.instagram.com/upafilm/embed/"
-		title="@upafilm on Instagram"
-		loading="lazy"
-	></iframe>
+	<div class="ig">
+		<!-- Shown until the embed reports it rendered; stays up where it's blocked
+		     (e.g. Firefox tracking protection) or JS is off. -->
+		<a class="ig-fallback" href="https://instagram.com/upafilm">
+			<span class="ig-handle">@upafilm</span>
+			<span class="ig-cta">See the photos on Instagram &rarr;</span>
+		</a>
+		<iframe
+			class="ig-embed"
+			src="https://www.instagram.com/upafilm/embed/"
+			title="@upafilm on Instagram"
+		></iframe>
+	</div>
 
 	<h2>Right now</h2>
 	<ul>
@@ -44,15 +51,69 @@ import Layout from '../../layouts/Layout.astro';
 	</ul>
 </Layout>
 
+<script>
+	// Instagram's embed posts MEASURE messages with its rendered height. Only once one
+	// arrives do we reveal the iframe and hide the fallback.
+	const wrap = document.querySelector('.ig');
+	const frame = wrap?.querySelector('iframe');
+	window.addEventListener('message', (e) => {
+		if (!frame || e.origin !== 'https://www.instagram.com' || e.source !== frame.contentWindow) return;
+		let msg;
+		try {
+			msg = typeof e.data === 'string' ? JSON.parse(e.data) : e.data;
+		} catch {
+			return;
+		}
+		const height = msg?.type === 'MEASURE' ? Number(msg.details?.height) : 0;
+		if (height > 0) {
+			frame.style.height = `${height}px`;
+			wrap.classList.add('loaded');
+		}
+	});
+</script>
+
 <style>
+	.ig {
+		max-width: 540px;
+		margin: 1rem 0;
+	}
+
 	.ig-embed {
 		display: block;
 		width: 100%;
-		max-width: 540px;
-		height: 560px;
-		margin: 1rem 0;
+		height: 0;
+		border: none;
+	}
+
+	.ig.loaded .ig-embed {
+		border-radius: 4px;
+	}
+
+	.ig.loaded .ig-fallback {
+		display: none;
+	}
+
+	.ig-fallback {
+		display: flex;
+		flex-direction: column;
+		gap: 0.25rem;
+		padding: 1.25rem;
 		border: 1px solid var(--border);
 		border-radius: 4px;
-		background: #fff;
+		background: var(--bg-raised);
+	}
+
+	.ig-fallback:hover {
+		border-color: var(--accent-dim);
+	}
+
+	.ig-handle {
+		color: var(--text);
+		font-weight: 600;
+	}
+
+	.ig-cta {
+		color: var(--accent);
+		font-size: 0.9rem;
 	}
 </style>
