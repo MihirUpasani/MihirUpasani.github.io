@@ -1,6 +1,5 @@
 ---
 import Layout from '../../layouts/Layout.astro';
-import InstagramGrid from '../../components/InstagramGrid.astro';
 ---
 
 <Layout title="About">
@@ -31,7 +30,12 @@ import InstagramGrid from '../../components/InstagramGrid.astro';
 	<p>
 		I shoot film. The latest frames end up on <a href="https://instagram.com/upafilm">@upafilm</a>.
 	</p>
-	<InstagramGrid username="upafilm" />
+	<iframe
+		class="ig-embed"
+		src="https://www.instagram.com/upafilm/embed/"
+		title="@upafilm on Instagram"
+		loading="lazy"
+	></iframe>
 
 	<h2>Right now</h2>
 	<ul>
@@ -39,3 +43,16 @@ import InstagramGrid from '../../components/InstagramGrid.astro';
 		<li>Open to new roles. <a href="/contact/">Say hi</a>.</li>
 	</ul>
 </Layout>
+
+<style>
+	.ig-embed {
+		display: block;
+		width: 100%;
+		max-width: 540px;
+		height: 560px;
+		margin: 1rem 0;
+		border: 1px solid var(--border);
+		border-radius: 4px;
+		background: #fff;
+	}
+</style>
