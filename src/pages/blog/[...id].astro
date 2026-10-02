@@ -3,14 +3,23 @@ import Layout from '../../layouts/Layout.astro';
 import { getCollection, render } from 'astro:content';
 
 export async function getStaticPaths() {
-	const posts = await getCollection('blog');
+	// Drafts get no page in production builds, so their URLs don't exist on the live site.
+	const isProd = import.meta.env.PROD;
+	const posts = await getCollection('blog', ({ data }) => !isProd || !data.draft);
 	return posts.map((post) => ({
 		params: { id: post.id },
-		props: { post },
+		props: {
+			post,
+			seriesParts: post.data.series
+				? posts
+						.filter((p) => p.data.series === post.data.series)
+						.sort((a, b) => (a.data.part ?? 0) - (b.data.part ?? 0))
+				: [],
+		},
 	}));
 }
 
-const { post } = Astro.props;
+const { post, seriesParts } = Astro.props;
 const { Content } = await render(post);
 ---
 
@@ -25,6 +34,23 @@ const { Content } = await render(post);
 			})}
 			{post.data.draft && ' · draft'}
 		</p>
+		{seriesParts.length > 1 && (
+			<nav class="series" aria-label="Series">
+				<p class="series-title">Part {post.data.part} of a {seriesParts.length}-part series</p>
+				<ol>
+					{seriesParts.map((p) => (
+						<li>
+							{p.id === post.id ? (
+								<span aria-current="page">{p.data.title}</span>
+							) : (
+								<a href={`/blog/${p.id}/`}>{p.data.title}</a>
+							)}
+							{p.data.draft && <span class="draft-tag"> · draft</span>}
+						</li>
+					))}
+				</ol>
+			</nav>
+		)}
 		<Content />
 	</article>
 	<p><a href="/blog/">&larr; back to blog</a></p>
@@ -75,6 +101,34 @@ const { Content } = await render(post);
 		color: var(--text-faint);
 		font-size: 0.85rem;
 		margin-top: -0.5rem;
+	}
+
+	.series {
+		margin: 1.5rem 0 2rem;
+		padding: 1rem 1.25rem;
+		border: 1px solid var(--border);
+		border-radius: 4px;
+		background: var(--bg-raised);
+		font-size: 0.9rem;
+	}
+
+	.series-title {
+		margin: 0 0 0.5rem;
+		color: var(--text-dim);
+	}
+
+	.series ol {
+		margin: 0;
+		padding-left: 1.4rem;
+	}
+
+	.series [aria-current] {
+		color: var(--text);
+		font-weight: 600;
+	}
+
+	.draft-tag {
+		color: var(--text-faint);
 	}
 
 	article :global(.mermaid) {

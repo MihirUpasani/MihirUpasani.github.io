@@ -8,6 +8,9 @@ const blog = defineCollection({
 		description: z.string(),
 		pubDate: z.coerce.date(),
 		draft: z.boolean().default(false),
+		// Posts sharing a series name get a parts list; part sets their order.
+		series: z.string().optional(),
+		part: z.number().int().positive().optional(),
 	}),
 });
 

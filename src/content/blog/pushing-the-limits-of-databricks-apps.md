@@ -2,15 +2,17 @@
 title: "Pushing the Limits of Databricks Apps"
 description: "A field report on building a multi-tenant, multi-app machine learning platform on Databricks Apps, and the seams you hit once you leave the demo stage."
 pubDate: 2026-09-29
+series: databricks-apps
+part: 1
 ---
 
-I have spent the last stretch building on Databricks Apps, and I want to write down
-what I learned, partly because I keep forgetting the details myself, and partly because
+We have spent the last stretch building on Databricks Apps, and we want to write down
+what we learned, partly because we keep forgetting the details ourselves, and partly because
 most of it is not written down anywhere. Databricks Apps is a good platform. It is also
 young, and once you push past the demo-app stage you start running into the seams. This
-is a tour of those seams and what I did about them.
+is a tour of those seams and what we did about them.
 
-For context, the thing I am building is an internal platform for machine learning
+For context, the thing we are building is an internal platform for machine learning
 experimentation and model management, with Databricks as the backbone. Teams use it to
 organize models, run training and scoring experiments on Databricks compute, compare
 results across versions, track metrics, and manage the configuration around all of it.
@@ -73,11 +75,11 @@ There is no CORS configuration you can set, because the rejection happens above 
 
 ## The bounce
 
-The workaround I landed on is a redirect handshake. When the first backend call fails, I
+The workaround we landed on is a redirect handshake. When the first backend call fails, we
 send the browser on a full-page navigation to a bounce endpoint on the backend, carrying
 the original page URL along so we can come back. Because the user already has a live
 session with the workspace, the proxy does a silent single sign-on: no login prompt, it
-just sets the backend's cookie and lets the request through. My bounce endpoint then sends
+just sets the backend's cookie and lets the request through. Our bounce endpoint then sends
 a redirect straight back to the frontend. The page reloads, the same fetch runs again, and
 this time the browser has the cookie, so everything works.
 
@@ -103,11 +105,11 @@ sequenceDiagram
     BE-->>B: 200 data
 ```
 
-Two details cost me real time here.
+Two details cost us real time here.
 
-First, I originally passed the return URL as a query parameter. It kept vanishing. It
+First, we originally passed the return URL as a query parameter. It kept vanishing. It
 turns out the OAuth redirect chain strips query parameters somewhere in the middle, so by
-the time you land back home the parameter is gone. The path survives, though, so I encode
+the time you land back home the parameter is gone. The path survives, though, so we encode
 the whole return URL into the path of the bounce request instead. Ugly, but reliable.
 
 Second, sometimes even the path gets eaten and the user lands on the bare root of the
@@ -121,7 +123,7 @@ dance again, complete with a page flash. So the frontend quietly pings a health 
 on the backend every few minutes with credentials attached. That touch resets the expiry
 and the user never notices.
 
-One thing I was careful about: a bounce endpoint that redirects wherever the URL tells it
+One thing we were careful about: a bounce endpoint that redirects wherever the URL tells it
 to is an open redirect waiting to be abused. So it only ever redirects to hosts that match
 the workspace's own domain pattern. Anything else is refused.
 
@@ -130,12 +132,12 @@ the workspace's own domain pattern. Anything else is refused.
 Once a request actually reaches the app, there are two separate questions to answer, and
 keeping them separate made everything cleaner. The cookie answers "are you allowed to talk
 to this app at all." That is the proxy's job. The token answers "who are you," and that is
-mine.
+ours.
 
-The platform injects the user's access token into every request as a header. I take that
-token and ask the workspace's identity service who it belongs to, which gives me the
+The platform injects the user's access token into every request as a header. We take that
+token and ask the workspace's identity service who it belongs to, which gives us the
 user's email and, importantly, their group memberships. That identity lookup is not free,
-so I cache it per token. The groups drive everything downstream: the app is multi-tenant,
+so we cache it per token. The groups drive everything downstream: the app is multi-tenant,
 and a user only sees the data their groups grant them, with an admin group that sees
 across the whole thing.
 
@@ -152,9 +154,9 @@ flowchart TD
 ```
 
 There is a wrinkle. A native version of the user-to-machine identity flow was still
-rolling out while I was building, so I resolve identity by hand against the identity
+rolling out while we were building, so we resolve identity by hand against the identity
 service rather than waiting on the built-in helper. There is also a case where the caller
-is actually a service principal standing in for a user, and I have to unwind that back to
+is actually a service principal standing in for a user, and we have to unwind that back to
 the real person.
 
 In total there are three identities floating around at any moment. There is the human
@@ -168,8 +170,8 @@ credentials that never appear in code.
 flowchart TB
     subgraph now["Three identities in play"]
         U["Human user: forwarded token"]
-        App["App service principal: privileged actions"]
-        X["Cross-workspace identity: M2M creds from secret scope"]
+        App["App service principal:<br/>privileged actions"]
+        X["Cross-workspace identity:<br/>M2M creds from secret scope"]
     end
     U -->|"who am I -> groups"| Data["Tenant-scoped data"]
     App -->|"launch compute, own jobs"| Jobs["Databricks jobs"]
@@ -185,13 +187,13 @@ whatever, you have to declare the extra scopes you want up front, in the app's o
 definition. Miss one and you do not find out until a call that should work comes back
 denied, with an error that does not obviously point at a missing scope.
 
-So the app declares the scopes it needs as part of its deployed configuration. In my case
+So the app declares the scopes it needs as part of its deployed configuration. In our case
 the interesting one is the ability to run SQL on the user's behalf, which the app uses to
 serve some of its warehouse-backed views. The platform then layers a couple of baseline
 identity scopes on top of whatever you ask for, so what the app actually ends up with is
 the SQL scope plus read access to the current user's identity and group memberships. That
 last part matters, because it is exactly what the identity lookup earlier depends on. The
-lesson I took away is that scopes are not something you bolt on at runtime by asking nicely
+lesson we took away is that scopes are not something you bolt on at runtime by asking nicely
 in a header. They are declared with the app, provisioned at deploy time, and if you change
 what your app needs to do, you change the declaration and redeploy.
 
@@ -206,11 +208,11 @@ user against the jobs surface, and then wiring the app to request that scope. It
 kind of thing you can do purely from inside your own repo; it needs a workspace-level
 integration to exist first, and then the app opts into it. Until that piece was in place,
 every attempt to run a job on the user's behalf came back unauthorized, and the error gave
-no hint that the fix lived in an integration I had not created yet.
+no hint that the fix lived in an integration we had not created yet.
 
 ## The permission trap
 
-This is the one that cost me the most confusion, because the symptom and the cause live in
+This is the one that cost us the most confusion, because the symptom and the cause live in
 completely different places.
 
 The database is managed Postgres. Schema changes go through a separate migration job that
@@ -230,28 +232,28 @@ flowchart TB
     Mig --> Seqs["Sequences (id generators)"]
     App["App service principal"] -.->|"explicit GRANT needed"| Tables
     App -.->|"explicit GRANT needed"| Seqs
-    Miss["Grant tables but forget sequences"] --> Fail["First insert fails on the primary key id"]
+    Miss["Grant tables but forget sequences"] --> Fail["First insert fails<br/>on the primary key id"]
 ```
 
 That alone is just standard Postgres hygiene. What turned it into a genuine trap was that
-the grants did not stay put. I would have a working app, redeploy it, and suddenly it could
-not read its own tables anymore. Nothing in my code changed. What changed was the deploy.
+the grants did not stay put. We would have a working app, redeploy it, and suddenly it could
+not read its own tables anymore. Nothing in our code changed. What changed was the deploy.
 
-The thing I eventually pieced together is that how the app's database binding gets
+The thing we eventually pieced together is that how the app's database binding gets
 provisioned is not perfectly stable across tool versions. Deploying with one version of the
 CLI would wire up the app's Postgres access one way; deploying with a different version, or
-after the platform's own provisioning behavior shifted underneath me, would wire it up
+after the platform's own provisioning behavior shifted underneath us, would wire it up
 differently, and in the process the carefully applied grants on the existing tables and
 sequences would effectively be lost. The app comes back up, connects fine, and then falls
 over the moment it touches a table, because the identity it connects as no longer has the
 privileges it had an hour ago.
 
-What took me longer to appreciate is that this is not really a Postgres story at all. It is
+What took us longer to appreciate is that this is not really a Postgres story at all. It is
 a service-principal-grant story, and it repeats anywhere the app relies on a privilege that
 lives outside the app's own code. The same shape shows up on the data-governance side: the
 app declares, right there in its own definition, that it should be able to read a particular
 storage volume and query a particular set of governed tables. The declaration is
-necessary, but it is not the same thing as the grant being effective. I hit this twice from
+necessary, but it is not the same thing as the grant being effective. We hit this twice from
 opposite directions. In one case the app tried to read a binary artifact out of a volume it
 was supposed to have access to, and the call came back forbidden, because the effective
 grant chain the platform needs, use the catalog, use the schema, then read the volume, was
@@ -283,7 +285,7 @@ to be idempotent and has to run as part of bringing an environment up to date, s
 whatever a deploy does to the permissions, the next reconcile puts them back. Second,
 pin your tooling. Casually letting the CLI version drift between deploys is enough to
 resurrect this on its own, and when it comes back it does not look like a permissions
-problem, it looks like your app suddenly forgot how to read a table. If I could give one
+problem, it looks like your app suddenly forgot how to read a table. If we could give one
 piece of advice to anyone standing up an infrastructure-backed app here, it is to write the
 grants down as code, run them every deploy, verify them as effective rather than merely
 declared, and be suspicious of any environment where the version of the tool that deploys
@@ -292,7 +294,7 @@ the app is allowed to wander.
 ## Wiring the app to real infrastructure
 
 The nice surprise with Databricks Apps is that you can bind real infrastructure to an app
-declaratively instead of gluing it together at runtime. I lean on that hard.
+declaratively instead of gluing it together at runtime. We lean on that hard.
 
 ```mermaid
 flowchart LR
@@ -317,7 +319,7 @@ the app by the platform, never checked in.
 
 ## Shipping it
 
-Deployment goes through declarative bundles, and the shape that worked for me was layered.
+Deployment goes through declarative bundles, and the shape that worked for us was layered.
 There is a static, environment-agnostic base that sets the run command and a few defaults.
 Then there are per-environment overrides that fill in everything that changes between dev,
 test, and prod: the app's name, how much CPU and memory it gets, which database it points
@@ -330,16 +332,16 @@ flowchart TB
     Base --> Dev["dev override"]
     Base --> Test["test override"]
     Base --> Prod["prod override"]
-    Dev --> DevV["name, CPU/mem, DB, trusted origin, secret scope"]
-    Test --> TestV["name, CPU/mem, DB, trusted origin, secret scope"]
-    Prod --> ProdV["name, CPU/mem, DB, trusted origin, secret scope"]
+    Dev --> DevV["name, CPU/mem, DB,<br/>trusted origin, secret scope"]
+    Test --> TestV["name, CPU/mem, DB,<br/>trusted origin, secret scope"]
+    Prod --> ProdV["name, CPU/mem, DB,<br/>trusted origin, secret scope"]
 ```
 
-I also package a couple of internal libraries as wheels and stage them into the app at
+We also package a couple of internal libraries as wheels and stage them into the app at
 deploy time rather than pulling them from a registry. It keeps the deploy self-contained.
 
-The lesson that bit me hardest lives here. The shared CI reads bundle variables out of
-each target's own block and turns them into environment variables. I assumed a top-level
+The lesson that bit us hardest lives here. The shared CI reads bundle variables out of
+each target's own block and turns them into environment variables. We assumed a top-level
 default would flow down into every target. It does not. If a target does not restate the
 variable, CI sees it as empty, and you get a deploy that points at a half-built path
 because a value silently came through blank. The validation step does not catch it,
@@ -374,12 +376,12 @@ flowchart LR
     H -->|no| Red["Fail the run"]
 ```
 
-The part I am happiest about is the last step. After every deploy the pipeline asks the
+The part we are happiest about is the last step. After every deploy the pipeline asks the
 platform for the app's URL, curls its health endpoint, and fails the whole run if it does
 not come back healthy. A deploy that produces a broken app is a failed deploy, not a green
 checkmark and a surprise later.
 
-## Two things I built on top
+## Two things we built on top
 
 Two more pieces stretched the platform in ways worth mentioning.
 
@@ -387,7 +389,7 @@ The app runs its own job queue. Users submit work, and a background manager insi
 launches it as real compute jobs, but under the submitting user's identity rather than the
 app's, so ownership and access stay correct. Every launched job is tagged so the app can
 find its own runs again later and reconcile what it thinks is running against what actually
-is, every cycle. The queue's configuration lives in the database and hot-reloads, so I can
+is, every cycle. The queue's configuration lives in the database and hot-reloads, so we can
 retune limits without a redeploy.
 
 ```mermaid
@@ -405,15 +407,15 @@ and logs all export to tables in the warehouse. Every request gets an id that fo
 through the logs, and the access logs are structured key-value so they are actually
 searchable instead of being a wall of text.
 
-## What I keep wishing for
+## What we keep wishing for
 
-If I could hand Databricks a wishlist, it would start with a cross-app auth story. Two
-apps, same workspace, same already-authenticated user, and I still need a full-page
+If we could hand Databricks a wishlist, it would start with a cross-app auth story. Two
+apps, same workspace, same already-authenticated user, and we still need a full-page
 redirect round trip just to hand one of them a cookie. A workspace-scoped cookie, or a
 proxy that understood CORS, or honestly any first-class cross-app mechanism, would delete
 the most complicated code in the whole system.
 
-None of this is a complaint, really. I got a genuinely multi-tenant, multi-environment,
+None of this is a complaint, really. We got a genuinely multi-tenant, multi-environment,
 multi-app product running on the platform, with real infrastructure bound declaratively
 and a pipeline that refuses to ship something broken. The seams are just where the
 interesting work was, and finding out where a platform bends is most of the fun of using a
