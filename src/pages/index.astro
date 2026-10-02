@@ -1,9 +1,9 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import { getCollection } from 'astro:content';
+import { isLive } from '../lib/posts';
 
-const isProd = import.meta.env.PROD;
-const recent = (await getCollection('blog', ({ data }) => !isProd || !data.draft))
+const recent = (await getCollection('blog', isLive))
 	.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf())
 	.slice(0, 3);
 ---

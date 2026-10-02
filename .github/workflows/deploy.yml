@@ -4,6 +4,9 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+  schedule:
+    # Daily rebuild (12:00 UTC, ~7am Central) releases posts whose pubDate has arrived.
+    - cron: '0 12 * * *'
 
 permissions:
   contents: read
