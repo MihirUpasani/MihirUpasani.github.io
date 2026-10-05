@@ -1,7 +1,7 @@
 ---
 title: "Running Jobs from a Databricks App"
 description: "How an app actually submits work, what a notebook run really is, how we keep a queue honest inside a web process, and why cluster policies turned out to be the quiet center of the whole thing."
-pubDate: 2026-10-07
+pubDate: 2026-10-05
 series: databricks-apps
 part: 2
 ---
