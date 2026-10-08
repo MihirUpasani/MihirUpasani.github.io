@@ -1,7 +1,7 @@
 ---
 title: "The Data Layer and Multi-Tenancy on Databricks Apps"
 description: "How we model data, how one database serves many tenants without leaking between them, how schema changes happen safely, and why the hardest bugs down here were never really about SQL."
-pubDate: 2026-10-14
+pubDate: 2026-10-08
 series: databricks-apps
 part: 3
 ---
