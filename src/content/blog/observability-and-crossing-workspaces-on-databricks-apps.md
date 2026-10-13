@@ -1,7 +1,7 @@
 ---
 title: "Observability and Crossing Workspaces on Databricks Apps"
 description: "Being able to see what the system is doing, and running work in a workspace the app does not live in: the two things that only matter once the product is live."
-pubDate: 2026-10-21
+pubDate: 2026-10-13
 series: databricks-apps
 part: 4
 ---
