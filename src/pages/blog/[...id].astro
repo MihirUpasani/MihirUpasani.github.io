@@ -32,6 +32,16 @@ const { Content } = await render(post);
 				month: 'long',
 				day: 'numeric',
 			})}
+			{post.data.updatedDate && (
+				<span class="updated">
+					{' '}· Updated{' '}
+					{post.data.updatedDate.toLocaleDateString('en-US', {
+						year: 'numeric',
+						month: 'long',
+						day: 'numeric',
+					})}
+				</span>
+			)}
 			{statusLabel(post)}
 		</p>
 		{seriesParts.length > 1 && (
