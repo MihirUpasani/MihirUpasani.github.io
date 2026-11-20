@@ -59,13 +59,13 @@ A notebook already has the user's identity. So the assistant is a Python package
 a wheel to a Volume by an asset bundle and loaded as a notebook magic:
 
 ```python
-%mml why did run 124337049826774 fail?
+%assistant why did run 1234567890 fail?
 ```
 
 ```mermaid
 flowchart LR
-    Bundle["Asset bundle deploy"] --> Wheel["mml_assistant wheel<br/>in a UC Volume"]
-    Wheel --> NB["Notebook: %mml ..."]
+    Bundle["Asset bundle deploy"] --> Wheel["assistant wheel<br/>in a UC Volume"]
+    Wheel --> NB["Notebook: %assistant ..."]
     NB --> Tools["Tools run as the<br/>notebook's user"]
 ```
 
@@ -164,7 +164,7 @@ flowchart TB
     Agent --> T1["find_job_runs / get_run_context<br/>(your runs, any workspace)"]
     Agent --> T2["search_app_logs (OTel logs)"]
     Agent --> T3["query_sql (read-only, as you)"]
-    Agent --> T4["get_model (tenant-filtered via mml-api)"]
+    Agent --> T4["get_model (tenant-filtered API)"]
     Agent --> T5["regression tools (dry-run, allowlisted)"]
     Agent --> T6["ask_genie (counts and trends)"]
     T1 --> Scope["You only ever see what<br/>you already have access to"]
@@ -213,8 +213,8 @@ The platform runs in six workspaces: dev, test and prod, for two lines of busine
 in one of them is invisible to the Jobs API of the others. Part four showed how work gets routed
 across workspaces; the assistant has to read the results of that work, wherever it ran.
 
-Two pieces of plumbing make that possible, and neither was built for the assistant. Every MML
-cluster policy pins log delivery to one shared Unity Catalog Volume, a folder per workspace and a
+Two pieces of plumbing make that possible, and neither was built for the assistant. All of our
+cluster policies pin log delivery to one shared Unity Catalog Volume, a folder per workspace and a
 folder per cluster. And the org's system tables are exposed as views that list every job run in
 every workspace, with the cluster it ran on. So for a run elsewhere, the assistant looks the run
 up in the views, finds its cluster, and reads that cluster's driver logs from the Volume, as the
@@ -222,11 +222,11 @@ user. Unity Catalog grants decide what they see, same as everywhere else.
 
 ```mermaid
 flowchart LR
-    C1["Job cluster in ahc-prod"] -->|"log delivery"| Vol[("Shared log Volume<br/>workspace/cluster/driver")]
+    C1["Job cluster in prod"] -->|"log delivery"| Vol[("Shared log Volume<br/>workspace/cluster/driver")]
     C2["Job cluster in dev"] --> Vol
     C1 -.->|"run metadata"| SV[("Org system views")]
     C2 -.-> SV
-    Ask["%mml in dev, as the user"] -->|"run id to workspace + cluster"| SV
+    Ask["%assistant in dev, as the user"] -->|"run id to workspace + cluster"| SV
     Ask -->|"read the log tail"| Vol
 ```
 
@@ -266,7 +266,7 @@ how to read each one:
 | --- | --- |
 | `failure` | Python tracebacks, Py4J errors and Spark job aborts, the first one and the latest |
 | `spark` | executors and tasks lost and why, jars the driver failed to send, the tail of the executor named in the abort |
-| `app_errors` | ERROR lines logged by our own code, for example an mml-api timeout |
+| `app_errors` | ERROR lines logged by our own code, for example a timeout calling our model API |
 | `lifecycle` | how it ended: cluster termination, preemption, out of memory, kills |
 | `other_jvm_errors` | what is left, with known platform noise removed |
 | `init_scripts` | init-script errors, read only when nothing else failed |
@@ -294,7 +294,7 @@ one the log implied.
 ```mermaid
 flowchart TB
     Err["Surface error in the log"] --> Check["Fetch ground truth"]
-    Check --> M["Real model config (mml-api)"]
+    Check --> M["Real model config (model API)"]
     Check --> L["Real app logs (OTel)"]
     Check --> F["Source file structure"]
     M --> Decide{"Evidence agree with the error?"}
@@ -390,7 +390,7 @@ the log reader's blind spot and then showed the fix worked.
 
 ## When the docs are wrong
 
-One live-suite answer said the mml-jvm build docs claim Spring Core is bundled inside the jar. We
+One live-suite answer said our JVM library's build docs claim Spring Core is bundled inside the jar. We
 assumed the model had made that up and added a guardrail: never say a doc says something unless a
 tool returned that text, and mark any citation of a path no search returned. Then we checked. The
 doc does say it. The doc is wrong: the build has no shading step, the jar contains no Spring
@@ -449,7 +449,7 @@ answered anyway: the system tables record a termination code, not the error text
 error text now goes through the Jobs API, reading each failed run's error, and the answer comes
 with the runbook's known cause and fix.
 
-"Why did this job fail 124337049826774?" was the prod run from the log section above.
+"Why did this job fail 1234567890?" was the prod run from the log section above.
 
 The third lesson was quieter. The demo notebook did not set a model, so it ran on the old default,
 and the trace did not record which model answered; we worked it out from response timings. Every
